@@ -1,9 +1,11 @@
 extern crate dirs;
 extern crate rpassword;
+extern crate toml;
 
 use std::fs;
 
 use anyhow::Result;
+use spotifyarch::config::UserConfig;
 
 fn init_spoterm_config_if_needed() -> Result<()> {
     let config_dir = dirs::home_dir()
@@ -19,8 +21,11 @@ fn init_spoterm_config_if_needed() -> Result<()> {
         println!("config.toml not found and input your <CLIENT_ID> and <CLIENT_SECRET>");
         let client_id = rpassword::read_password_from_tty(Some("Client ID: "))?;
         let client_secret = rpassword::read_password_from_tty(Some("Client Secret: "))?;
-        println!("ID: {}", client_id);
-        println!("SECRET: {}", client_secret);
+        let user_config = UserConfig::new()
+            .client_id(client_id)
+            .client_secret(client_secret);
+
+        fs::write(config.as_path(), toml::to_string(&user_config)?)?;
     }
     Ok(())
 }
