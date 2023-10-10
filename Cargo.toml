@@ -7,9 +7,19 @@ edition = "2021"
 
 [dependencies]
 dirs = "5.0"
-anyhow = "1.0"
+anyhow = "1.0.75"
+clap = { version = "4.4.6", features = ["derive", "string"] }
 rpassword = "3.0.1"
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.8.2"
-rspotify = "0.10.0"
+rspotify = "0.12.0"
 tokio = { version = "1.33.0", features = ["full"] }
+crossbeam = "0.8"
+librespot-connect = { version = "0.4.2", optional = true }
+librespot-playback = { version = "0.4.2", optional = true }
+librespot-core = "0.4.2"
+maybe-async = "0.2.7"
+async-trait = "0.1.73"
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
+chrono = "0.4.31"
