@@ -23,6 +23,5 @@ impl Default for AuthConfig {
 
 //impl AuthConfig {
 //    pub fn new(state: &SharedState) -> Result<AuthConfig> {
-//        let audio_cache_folder
 //    }
 //}

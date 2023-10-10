@@ -1,12 +1,16 @@
-
 use anyhow::{anyhow, Result};
 use librespot_core::session::Session;
 use maybe_async::maybe_async;
-use rspotify::{clients::{OAuthClient, BaseClient}, Credentials, OAuth, Config, sync::Mutex, Token, http::HttpClient, ClientResult};
+use rspotify::{
+    clients::{BaseClient, OAuthClient},
+    http::HttpClient,
+    sync::Mutex,
+    ClientResult, Config, Credentials, OAuth, Token,
+};
 
-use crate::auth::{AuthConfig, token};
+use crate::{auth::AuthConfig, token};
 
-use std::{sync::Arc, fmt};
+use std::{fmt, sync::Arc};
 
 #[derive(Clone, Default)]
 /// A Spotify Client to interact with Spotify API server
@@ -50,13 +54,29 @@ impl Spotify {
         }
     }
 
-
     pub async fn session(&self) -> Session {
         self.session
             .lock()
             .await
             .clone()
             .expect("Spotify client's session should not be empty")
+    }
+
+    pub async fn access_token(&self) -> Result<String> {
+        let should_update = match self.token.lock().await.unwrap().as_ref() {
+            Some(token) => token.is_expired(),
+            None => true,
+        };
+        if should_update {
+            self.refresh_token().await?;
+        }
+
+        match self.token.lock().await.unwrap().as_ref() {
+            Some(token) => Ok(token.access_token.clone()),
+            None => Err(anyhow!(
+                "failed to get authentication token stored inside the client."
+            )),
+        }
     }
 }
 
@@ -87,7 +107,13 @@ impl BaseClient for Spotify {
             return Ok(old_token);
         }
 
-        match token::get_token(&session, &self.client_id).await {}
+        match token::get_token(&session, &self.client_id).await {
+            Ok(token) => Ok(Some(token)),
+            Err(err) => {
+                tracing::error!("Failed to get a new token: {err:#}");
+                Ok(old_token)
+            }
+        }
     }
 }
 
@@ -109,5 +135,3 @@ impl OAuthClient for Spotify {
         panic!("`OAuthClient::request_token` should never be calle")
     }
 }
-
-
