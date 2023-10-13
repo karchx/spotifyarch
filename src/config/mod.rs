@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Result};
 use config_parser2::*;
+use librespot_core::config::SessionConfig;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -12,6 +13,7 @@ pub struct AppConfig {
     pub client_id: String,
     pub client_port: u16,
     pub default_device: String,
+    pub ap_port: Option<u16>,
 }
 
 impl Default for AppConfig {
@@ -20,6 +22,7 @@ impl Default for AppConfig {
             client_id: "7262364c3d2a4642993653f18072fb9b".to_string(),
             client_port: 8080,
             default_device: "spotifyarch".to_string(),
+            ap_port: None,
         }
     }
 }
@@ -27,7 +30,10 @@ impl Default for AppConfig {
 impl AppConfig {
     pub fn new(path: &Path) -> Result<Self> {
         let mut config = Self::default();
-        //if !config.parse_config
+        if !config.parse_config_file(path)? {
+            config.write_config_file(path)?
+        }
+
         Ok(config)
     }
 
@@ -43,11 +49,27 @@ impl AppConfig {
     }
 
     fn write_config_file(&self, path: &Path) -> Result<()> {
+        if !std::fs::metadata(&path).is_ok() {
+            if let Err(err) = std::fs::create_dir_all(&path) {
+                tracing::error!("Failed to create directory: {}", err);
+            } else {
+                tracing::info!("Directory created successfully");
+            }
+        }
+
         toml::to_string_pretty(&self)
             .map_err(From::from)
             .and_then(|content| {
                 std::fs::write(path.join(APP_CONFIG_FILE), content).map_err(From::from)
             })
+    }
+
+    pub fn session_config(&self) -> SessionConfig {
+        SessionConfig {
+            proxy: None,
+            ap_port: self.ap_port,
+            ..Default::default()
+        }
     }
 }
 
@@ -58,9 +80,9 @@ pub fn get_config_folder_path() -> Result<PathBuf> {
     }
 }
 
-pub fn get_cache_folder_next() -> Result<PathBuf> {
-    match  dirs::home_dir() {
+pub fn get_cache_folder_path() -> Result<PathBuf> {
+    match dirs::home_dir() {
         Some(home) => Ok(home.join(DEFAULT_CACHE_FOLDER)),
-        None => Err(anyhow!("cannon find the $HOME folder"))
+        None => Err(anyhow!("cannon find the $HOME folder")),
     }
 }
