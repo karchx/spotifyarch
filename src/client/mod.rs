@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::{auth::AuthConfig, event::ClientRequest, state::SharedState};
 use anyhow::Result;
 use librespot_core::session::Session;
+use rspotify::prelude::BaseClient;
 
 mod handlers;
 mod spotify;
@@ -28,7 +29,17 @@ impl Client {
         }
     }
 
-    pub async fn new_session(&self, state: &SharedState) -> Result<()> {
+    pub async fn new_session(&self, _state: &SharedState) -> Result<()> {
+        let session = crate::auth::new_session(&self.spotify.auth_config, false).await?;
+        *self.spotify.session.lock().await = Some(session);
+        tracing::info!("Used a new session for Spotify client.");
+
+        Ok(())
+    }
+
+    /// initializes the authentication token inside the Spotify client
+    pub async fn init_token(&self) -> Result<()> {
+        self.spotify.refresh_token().await?;
         Ok(())
     }
 }

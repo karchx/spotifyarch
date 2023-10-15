@@ -10,8 +10,15 @@ use anyhow::Result;
 
 #[tokio::main]
 async fn start_app(state: state::SharedState) -> Result<()> {
+    // client channels
+    let (client_pub, _client_sub) = flume::unbounded::<event::ClientRequest>();
+
     let auth_config = auth::AuthConfig::new(&state)?;
-    let _session = auth::new_session(&auth_config, true).await?;
+    let session = auth::new_session(&auth_config, true).await?;
+    // create a spotify API client
+    let client = client::Client::new(session, auth_config, state.app_config.client_id.clone(), client_pub.clone());
+    client.init_token().await?;
+
     Ok(())
 }
 
@@ -20,6 +27,8 @@ fn main() -> Result<()> {
     let cache_folder: std::path::PathBuf = config::get_cache_folder_path()?;
 
     let state = std::sync::Arc::new(state::State::new(&config_folder, &cache_folder)?);
+    
+
     start_app(state);
     Ok(())
 }
