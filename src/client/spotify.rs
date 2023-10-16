@@ -128,10 +128,10 @@ impl BaseClient for Spotify {
 #[maybe_async]
 impl OAuthClient for Spotify {
     fn get_oauth(&self) -> &OAuth {
-        panic!("`OAuthClient::get_oauth` should never be calle")
+        panic!("`OAuthClient::get_oauth` should never be called")
     }
 
     async fn request_token(&self, _code: &str) -> ClientResult<()> {
-        panic!("`OAuthClient::request_token` should never be calle")
+        panic!("`OAuthClient::request_token` should never be called")
     }
 }
