@@ -4,6 +4,7 @@ mod config;
 mod event;
 mod state;
 mod token;
+mod utils;
 
 use anyhow::Result;
 
