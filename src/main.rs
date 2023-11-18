@@ -5,6 +5,7 @@ mod event;
 mod state;
 mod token;
 mod utils;
+mod ui;
 
 use anyhow::{Context, Result};
 
@@ -36,7 +37,7 @@ async fn start_app(state: state::SharedState) -> Result<()> {
 
     init_spotify(&client_pub, &client, &state)
         .await
-        .context("Failed to initialize the Spotify data");
+        .context("Failed to initialize the Spotify data")?;
 
     let mut tasks = Vec::new();
 
@@ -47,6 +48,12 @@ async fn start_app(state: state::SharedState) -> Result<()> {
             client::start_client_request(state, client, client_sub).await;
         }
     }));
+
+    // application UI task
+    tokio::task::spawn_blocking({
+        let state = state.clone();
+        move || ui::run(state)
+    });
 
     for task in tasks {
         task.await?;
