@@ -11,6 +11,8 @@ use rspotify::{
 mod handlers;
 mod spotify;
 
+pub use handlers::*;
+
 #[derive(Clone)]
 pub struct Client {
     http: reqwest::Client,
@@ -50,7 +52,8 @@ impl Client {
         match request {
             ClientRequest::GetUserPlaylists => {
                 let playlists = self.current_user_playlists().await?;
-                state.data.write()
+                println!("Playlist {:?}", playlists);
+                //state.data.write().user_data.playlist = playlists;
             }
         }
 

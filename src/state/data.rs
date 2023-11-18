@@ -14,13 +14,7 @@ pub struct UserData {
     pub playlists: Vec<Playlist>,
 }
 
-/// the application's cache
-pub struct Caches {
-    pub context: ttl_cache
-}
-
 impl AppData {
-    pub fn get_tracks_by_id_mut(&mut self, id: &ContextId) -> Option<&mut Vec<Track>> {
-        self.cac
-    }
+//    pub fn get_tracks_by_id_mut(&mut self, id: &ContextId) -> Option<&mut Vec<Track>> {
+//    }
 }

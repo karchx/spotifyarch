@@ -6,7 +6,7 @@ mod state;
 mod token;
 mod utils;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 async fn init_spotify(
     client_pub: &flume::Sender<event::ClientRequest>,
@@ -21,7 +21,7 @@ async fn init_spotify(
 #[tokio::main]
 async fn start_app(state: state::SharedState) -> Result<()> {
     // client channels
-    let (client_pub, _client_sub) = flume::unbounded::<event::ClientRequest>();
+    let (client_pub, client_sub) = flume::unbounded::<event::ClientRequest>();
 
     let auth_config = auth::AuthConfig::new(&state)?;
     let session = auth::new_session(&auth_config, true).await?;
@@ -36,7 +36,21 @@ async fn start_app(state: state::SharedState) -> Result<()> {
 
     init_spotify(&client_pub, &client, &state)
         .await
-        .expect("Failed to initialize the Spotify data");
+        .context("Failed to initialize the Spotify data");
+
+    let mut tasks = Vec::new();
+
+    tasks.push(tokio::task::spawn({
+        let state = state.clone();
+        let client = client.clone();
+        async move { 
+            client::start_client_request(state, client, client_sub).await;
+        }
+    }));
+
+    for task in tasks {
+        task.await?;
+    }
 
     Ok(())
 }
