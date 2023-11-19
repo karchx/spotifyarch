@@ -30,7 +30,7 @@ async fn start_app(state: state::SharedState) -> Result<()> {
     let client = client::Client::new(
         session,
         auth_config,
-        state.app_config.client_id.clone(),
+        state.configs.app_config.client_id.clone(),
         client_pub.clone(),
     );
     client.init_token().await?;
@@ -66,7 +66,9 @@ fn main() -> Result<()> {
     let config_folder: std::path::PathBuf = config::get_config_folder_path()?;
     let cache_folder: std::path::PathBuf = config::get_cache_folder_path()?;
 
-    let state = std::sync::Arc::new(state::State::new(&config_folder, &cache_folder)?);
+    // initialize the application configs
+    let mut configs = state::Configs::new(&config_folder, &cache_folder)?;
+    let state = std::sync::Arc::new(state::State::new(configs));
 
     if let Err(err) = start_app(state) {
         tracing::error!("Encountered an error when running the application: {err:#}");
