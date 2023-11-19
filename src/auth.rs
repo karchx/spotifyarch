@@ -26,11 +26,11 @@ impl Default for AuthConfig {
 
 impl AuthConfig {
     pub fn new(state: &SharedState) -> Result<AuthConfig> {
-        let cache = Cache::new(Some(state.cache_folder.clone()), None, None, None)?;
+        let cache = Cache::new(Some(state.configs.cache_folder.clone()), None, None, None)?;
 
         let auth_config = AuthConfig {
             cache,
-            session_config: state.app_config.session_config(),
+            session_config: state.configs.app_config.session_config(),
         };
         Ok(auth_config)
     }
