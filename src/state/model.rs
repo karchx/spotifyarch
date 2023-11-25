@@ -53,6 +53,12 @@ impl From<rspotify_model::SimplifiedPlaylist> for Playlist {
     }
 }
 
+impl std::fmt::Display for Playlist {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} • {}", self.name, self.owner.0)
+    }
+}
+
 impl Track {
     pub fn display_name(&self) -> Cow<'_, str> {
         if self.explicit {
