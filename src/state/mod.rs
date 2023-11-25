@@ -1,11 +1,11 @@
 mod data;
 mod model;
-
-use std::sync::RwLock;
+mod ui;
 
 use anyhow::Result;
 pub use data::*;
 pub use model::*;
+use parking_lot::RwLock;
 
 use crate::config;
 
