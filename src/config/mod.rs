@@ -14,6 +14,19 @@ pub struct AppConfig {
     pub client_port: u16,
     pub default_device: String,
     pub ap_port: Option<u16>,
+
+    pub app_refresh_duration_in_ms: u64,
+
+    pub playback_window_width: usize,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
+pub enum BorderType {
+    Hidden,
+    Plain,
+    Rounded,
+    Double,
+    Thick,
 }
 
 impl Default for AppConfig {
@@ -23,6 +36,8 @@ impl Default for AppConfig {
             client_port: 8080,
             default_device: "spotifyarch".to_string(),
             ap_port: None,
+            app_refresh_duration_in_ms: 32,
+            playback_window_width: 6,
         }
     }
 }
