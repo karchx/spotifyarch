@@ -52,8 +52,7 @@ impl Client {
         match request {
             ClientRequest::GetUserPlaylists => {
                 let playlists = self.current_user_playlists().await?;
-                //println!("Playlist {:?}", playlists);
-                //state.data.write().user_data.playlist = playlists;
+                state.data.write().user_data.playlists = playlists;
             }
         }
 
