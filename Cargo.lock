@@ -2231,6 +2231,7 @@ dependencies = [
  "librespot-core",
  "librespot-playback",
  "maybe-async",
+ "parking_lot",
  "ratatui",
  "reqwest",
  "rpassword",

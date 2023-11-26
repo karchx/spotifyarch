@@ -20,6 +20,7 @@ crossbeam = "0.8"
 librespot-connect = { version = "0.4.2", optional = true }
 librespot-playback = { version = "0.4.2", optional = true }
 librespot-core = "0.4.2"
+parking_lot = "0.12.1"
 maybe-async = "0.2.7"
 async-trait = "0.1.73"
 tracing = "0.1.37"
