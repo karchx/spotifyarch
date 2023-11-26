@@ -1,52 +1,62 @@
-use std::io::stdout;
+use anyhow::{Result, Context};
+use tui::{widgets::Block, style, Frame, layout::Rect};
 
-use anyhow::Result;
-use crossterm::{
-    terminal::{enable_raw_mode, EnterAlternateScreen, disable_raw_mode, LeaveAlternateScreen},
-    ExecutableCommand, event::{self, Event, KeyCode},
-};
-use tui::{
-    backend::CrosstermBackend,
-    widgets::{Block, Borders, Paragraph},
-    Frame, Terminal,
-};
+use crate::state::*;
 
-use crate::state::SharedState;
+type Terminal = tui::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>;
+
+mod playback;
+mod utils;
+mod page;
 
 /// run the application ui
 pub fn run(state: SharedState) -> Result<()> {
-    enable_raw_mode()?;
-    stdout().execute(EnterAlternateScreen)?;
-    let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
+    let mut terminal = init_ui().context("failed to initialize the application's UI")?;
 
-    let mut should_quit = false;
-    while !should_quit {
-        terminal.draw(ui)?;
-        should_quit = handle_events()?;
-    }
+    let ui_refresh_duration = std::time::Duration::from_millis(state.configs.app_config.app_refresh_duration_in_ms);
 
-    disable_raw_mode()?;
-    stdout().execute(LeaveAlternateScreen)?;
+    loop {
+        {
+            let mut ui = state.ui.lock();
+            if let Err(err) = terminal.draw(|frame| {
+                let block = Block::default().style(style::Style::default());
+                frame.render_widget(block, frame.size());
 
-    Ok(())
-}
-
-fn handle_events() -> Result<bool> {
-    if event::poll(std::time::Duration::from_millis(50))? {
-        if let Event::Key(key) = event::read()? {
-            if key.kind == event::KeyEventKind::Press && key.code == KeyCode::Char('q') {
-                return Ok(true);
+                if let Err(err) = render_application(frame, &state, &mut ui, frame.size()) {
+                    tracing::error!("Failed to render the application: {err:#}");
+                }
+            }) {
+                 tracing::error!("Failed to draw the application: {err:#}");
             }
         }
     }
-
-    Ok(false)
 }
 
-fn ui(frame: &mut Frame) {
-    frame.render_widget(
-        Paragraph::new("Hello World!")
-            .block(Block::default().title("SpotifyArch").borders(Borders::ALL)),
-        frame.size(),
-    );
+fn init_ui() -> Result<Terminal> {
+    let mut stdout = std::io::stdout();
+    crossterm::terminal::enable_raw_mode()?;
+    crossterm::execute!(
+        stdout,
+        crossterm::terminal::EnterAlternateScreen,
+        crossterm::event::EnableMouseCapture
+    )?;
+    let backend = tui::backend::CrosstermBackend::new(stdout);
+    let mut terminal = tui::Terminal::new(backend)?;
+    terminal.clear()?;
+    Ok(terminal)
 }
+
+/// renders the application
+fn render_application(frame: &mut Frame, state: &SharedState, ui: &mut UIStateGuard, rect: Rect) -> Result<()> {
+    // playback window is the window that is always displayed on the screen.
+    let (playback_rect, rect) = playback::split_rect_for_playback_window(rect, state);
+    //playback::render_playback_window(frame, state, ui, rect);
+
+    render_main_layout(true, frame, state, ui, rect)?;
+    Ok(())
+}
+
+fn render_main_layout(is_active: bool, frame: &mut Frame, state: &SharedState, ui: &mut UIStateGuard, rect: Rect) -> Result<()> {
+    page::render_library_page(is_active, frame, state, ui, rect)
+}
+

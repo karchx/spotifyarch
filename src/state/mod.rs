@@ -5,7 +5,8 @@ mod ui;
 use anyhow::Result;
 pub use data::*;
 pub use model::*;
-use parking_lot::RwLock;
+pub use ui::*;
+use parking_lot::{RwLock, Mutex};
 
 use crate::config;
 
@@ -29,13 +30,16 @@ impl Configs {
 pub struct State {
     pub configs: Configs,
     pub data: RwLock<AppData>,
+    pub ui: Mutex<UIState>,
 }
 
 impl State {
     pub fn new(configs: Configs) -> Self {
+        let mut ui = UIState::default();
         Self {
             configs,
             data: RwLock::new(AppData::default()),
+            ui: Mutex::new(ui),
         }
     }
 }
