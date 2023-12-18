@@ -2,7 +2,7 @@ use tracing::Instrument;
 
 use crate::{event::ClientRequest, state::*};
 
-pub async fn start_client_request(
+pub async fn start_client_handler(
     state: SharedState,
     client: super::Client,
     client_sub: flume::Receiver<ClientRequest>,

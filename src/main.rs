@@ -1,3 +1,4 @@
+mod cli;
 mod auth;
 mod client;
 mod config;
@@ -45,7 +46,7 @@ async fn start_app(state: state::SharedState) -> Result<()> {
         let state = state.clone();
         let client = client.clone();
         async move { 
-            client::start_client_request(state, client, client_sub).await;
+            client::start_client_handler(state, client, client_sub).await;
         }
     }));
 
