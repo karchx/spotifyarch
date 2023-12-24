@@ -1,12 +1,12 @@
-mod cli;
 mod auth;
+mod cli;
 mod client;
 mod config;
 mod event;
 mod state;
 mod token;
-mod utils;
 mod ui;
+mod utils;
 
 use anyhow::{Context, Result};
 
@@ -45,7 +45,7 @@ async fn start_app(state: state::SharedState) -> Result<()> {
     tasks.push(tokio::task::spawn({
         let state = state.clone();
         let client = client.clone();
-        async move { 
+        async move {
             client::start_client_handler(state, client, client_sub).await;
         }
     }));
@@ -64,15 +64,22 @@ async fn start_app(state: state::SharedState) -> Result<()> {
 }
 
 fn main() -> Result<()> {
+    let args = cli::init_cli()?.get_matches();
+
     let config_folder: std::path::PathBuf = config::get_config_folder_path()?;
     let cache_folder: std::path::PathBuf = config::get_cache_folder_path()?;
 
     // initialize the application configs
-    let mut configs = state::Configs::new(&config_folder, &cache_folder)?;
-    let state = std::sync::Arc::new(state::State::new(configs));
+    let configs = state::Configs::new(&config_folder, &cache_folder)?;
 
-    if let Err(err) = start_app(state) {
-        tracing::error!("Encountered an error when running the application: {err:#}");
+    match args.subcommand() {
+        None => {
+            // log the application's configurations
+            tracing::info!("Configurations: {:?}", configs);
+            let state = std::sync::Arc::new(state::State::new(configs));
+            start_app(state);
+        }
+        Some(_) => {}
     }
     Ok(())
 }
