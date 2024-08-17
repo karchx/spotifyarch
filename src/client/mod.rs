@@ -34,6 +34,30 @@ impl Client {
         }
     }
 
+    pub async fn initialize_playback(&self, state:&SharedState) -> Result<()> {
+        #[cfg(feature = "streaming")]
+        if state.is_streaming_enabled() {
+            self.new_streaming_connection(state).await;
+        }
+
+        self.retrieve_current_playback(state, false).await?;
+
+        if state.player.read().playback.is_none() {
+            tracing::info!("No playback found, trying to connecto to an available device...");
+
+            // handle `connect_device` task separately as we don't want  to block here
+            tokio::task::spawn({
+                let client = self.clone();
+                let state = state.clone();
+                async move {
+                    client.connect_device(&state).await;
+                }
+            });
+        }
+
+        Ok(())
+    }
+
     pub async fn new_session(&self, _state: &SharedState) -> Result<()> {
         let session = crate::auth::new_session(&self.spotify.auth_config, false).await?;
         *self.spotify.session.lock().await = Some(session);
